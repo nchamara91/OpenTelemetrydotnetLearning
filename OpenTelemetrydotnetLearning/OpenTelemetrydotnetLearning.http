@@ -1,0 +1,6 @@
+@OpenTelemetrydotnetLearning_HostAddress = http://localhost:5085
+
+GET {{OpenTelemetrydotnetLearning_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
