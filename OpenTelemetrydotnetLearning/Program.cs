@@ -43,7 +43,7 @@ app.MapGet("/movies/{id:int}", (int id) =>
     .WithName("GetMovieById")
     .WithDescription("Get a movie by its ID");
 
-// Search movies by title
+// Search movies by title, director, or genre
 app.MapGet("/movies/search", (string? title, string? director, string? genre) =>
 {
     var result = movies.AsEnumerable();
