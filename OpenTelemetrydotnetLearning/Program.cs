@@ -5,8 +5,14 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddControllers();
 
 var app = builder.Build();
+
+// Get logger factory and create loggers
+var loggerFactory = app.Services.GetRequiredService<ILoggerFactory>();
+var moviesLogger = loggerFactory.CreateLogger("MoviesEndpoints");
+var weatherLogger = loggerFactory.CreateLogger("WeatherEndpoints");
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -15,6 +21,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.MapControllers();
 
 // Sample movie data
 var movies = new List<Movie>
@@ -30,15 +37,26 @@ var movies = new List<Movie>
 };
 
 // Get all movies
-app.MapGet("/movies", () => movies)
+app.MapGet("/movies", () =>
+{
+    moviesLogger.LogInformation("Retrieving all movies. Total count: {MovieCount}", movies.Count);
+    return movies;
+})
     .WithName("GetAllMovies")
     .WithDescription("Get all movies");
 
 // Get movie by ID
 app.MapGet("/movies/{id:int}", (int id) =>
 {
+    moviesLogger.LogInformation("Searching for movie with ID: {MovieId}", id);
     var movie = movies.FirstOrDefault(m => m.Id == id);
-    return movie is not null ? Results.Ok(movie) : Results.NotFound();
+    if (movie is not null)
+    {
+        moviesLogger.LogInformation("Found movie: {MovieTitle} by {MovieDirector}", movie.Title, movie.Director);
+        return Results.Ok(movie);
+    }
+    moviesLogger.LogWarning("Movie with ID: {MovieId} not found", id);
+    return Results.NotFound();
 })
     .WithName("GetMovieById")
     .WithDescription("Get a movie by its ID");
@@ -46,6 +64,9 @@ app.MapGet("/movies/{id:int}", (int id) =>
 // Search movies by title, director, or genre
 app.MapGet("/movies/search", (string? title, string? director, string? genre) =>
 {
+    moviesLogger.LogInformation("Searching movies with filters - Title: {Title}, Director: {Director}, Genre: {Genre}",
+        title ?? "any", director ?? "any", genre ?? "any");
+    
     var result = movies.AsEnumerable();
 
     if (!string.IsNullOrWhiteSpace(title))
@@ -63,7 +84,9 @@ app.MapGet("/movies/search", (string? title, string? director, string? genre) =>
         result = result.Where(m => m.Genre.Equals(genre, StringComparison.OrdinalIgnoreCase));
     }
 
-    return result.ToList();
+    var resultList = result.ToList();
+    moviesLogger.LogInformation("Search completed. Found {ResultCount} movies matching the criteria", resultList.Count);
+    return resultList;
 })
     .WithName("SearchMovies")
     .WithDescription("Search movies by title, director, or genre");
@@ -75,6 +98,7 @@ var summaries = new[]
 
 app.MapGet("/weatherforecast", () =>
 {
+    weatherLogger.LogInformation("Generating weather forecast for the next {DayCount} days", 5);
     var forecast =  Enumerable.Range(1, 5).Select(index =>
         new WeatherForecast
         (
@@ -83,6 +107,7 @@ app.MapGet("/weatherforecast", () =>
             summaries[Random.Shared.Next(summaries.Length)]
         ))
         .ToArray();
+    weatherLogger.LogInformation("Weather forecast generated successfully with {ForecastCount} entries", forecast.Length);
     return forecast;
 })
 .WithName("GetWeatherForecast");
