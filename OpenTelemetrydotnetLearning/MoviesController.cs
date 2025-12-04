@@ -7,9 +7,18 @@ namespace OpenTelemetrydotnetLearning
     [ApiController]
     public class MoviesController : ControllerBase
     {
+        private readonly ILogger<MoviesController> _logger;
+
+        public MoviesController(ILogger<MoviesController> logger)
+        {
+            _logger = logger;
+        }
+
         [HttpGet]
         public IActionResult GetMovies()
         {
+            _logger.LogInformation("API request received for getting movies from controller");
+            
             var movies = new[]
             {
                 new { Id = 1, Title = "Inception", Director = "Christopher Nolan" },
@@ -17,6 +26,7 @@ namespace OpenTelemetrydotnetLearning
                 new { Id = 3, Title = "Interstellar", Director = "Christopher Nolan" }
             };
 
+            _logger.LogInformation("Returning {MovieCount} movies from controller", movies.Length);
             return Ok(movies);
         }
     }
