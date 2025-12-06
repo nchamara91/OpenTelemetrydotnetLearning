@@ -16,9 +16,9 @@ builder.Services.AddOpenTelemetry()
             .AddAspNetCoreInstrumentation()
             .AddOtlpExporter(options =>
             {
-                if (!string.IsNullOrEmpty(otlpEndpoint))
+                if (!string.IsNullOrEmpty(otlpEndpoint) && Uri.TryCreate(otlpEndpoint, UriKind.Absolute, out var uri))
                 {
-                    options.Endpoint = new Uri(otlpEndpoint);
+                    options.Endpoint = uri;
                 }
                 
                 if (!string.IsNullOrEmpty(otlpApiKey))
