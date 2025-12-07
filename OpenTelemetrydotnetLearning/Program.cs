@@ -5,6 +5,30 @@ using OpenTelemetry.Metrics;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure OpenTelemetry with OTLP exporter
+var otlpEndpoint = builder.Configuration["Otlp:Endpoint"];
+var otlpApiKey = builder.Configuration["Otlp:ApiKey"];
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("OpenTelemetrydotnetLearning"))
+    .WithTracing(tracing =>
+    {
+        tracing
+            .AddAspNetCoreInstrumentation()
+            .AddOtlpExporter(options =>
+            {
+                if (!string.IsNullOrEmpty(otlpEndpoint) && Uri.TryCreate(otlpEndpoint, UriKind.Absolute, out var uri))
+                {
+                    options.Endpoint = uri;
+                }
+                
+                if (!string.IsNullOrEmpty(otlpApiKey))
+                {
+                    options.Headers = $"x-api-key={otlpApiKey}";
+                }
+            });
+    });
+
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
