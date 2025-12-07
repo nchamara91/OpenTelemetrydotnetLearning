@@ -1,6 +1,7 @@
 using OpenTelemetrydotnetLearning;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using OpenTelemetry.Metrics;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,6 +32,21 @@ builder.Services.AddOpenTelemetry()
 // Add services to the container.
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+
+// Configure OpenTelemetry with Console Exporter
+var serviceName = "OpenTelemetryDotnetLearning";
+var serviceVersion = "1.0.0";
+
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService(
+        serviceName: serviceName,
+        serviceVersion: serviceVersion))
+    .WithTracing(tracing => tracing
+        .AddAspNetCoreInstrumentation()
+        .AddConsoleExporter())
+    .WithMetrics(metrics => metrics
+        .AddAspNetCoreInstrumentation()
+        .AddConsoleExporter());
 
 var app = builder.Build();
 
